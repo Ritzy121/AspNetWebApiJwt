@@ -6,15 +6,15 @@ using Scalar.AspNetCore;
 using System.Text;
 using WebApi.DbContext;
 using WebApi.Entities;
+using WebApi.Interfaces;
+using WebApi.OpenApiSchemeTransformers;
+using WebApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
-
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
 
 // Add DB
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -32,7 +32,7 @@ builder.Services
 // Config Identity
 builder.Services.Configure<IdentityOptions>(options =>
 {
-    options.Password.RequiredLength = 3;
+    options.Password.RequiredLength = 8;
     options.Password.RequireDigit = false;
     options.Password.RequireLowercase = false;
     options.Password.RequireUppercase = false;
@@ -68,13 +68,45 @@ builder.Services
         };
     });
 
+var option = 1;
+
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+if (option == 1)
+{
+    // option 1: add security scheme only
+    builder.Services.AddOpenApi(options =>
+    {
+        options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+    });
+}
+
+if (option == 2)
+{
+    // option 2: add security scheme and apply it globally
+    builder.Services.AddOpenApi("internal", options =>
+    {
+        options.AddDocumentTransformer<BearerSecuritySchemeTransformer2>();
+    });
+    builder.Services.AddOpenApi("public");
+}
+
+builder.Services.AddScoped<IAuthService, AuthService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference();
+    //https://localhost:7052/scalar
+    app.MapScalarApiReference(options =>
+    {
+        //options.AddPreferredSecuritySchemes("BearerAuth"); // Security scheme name from the OpenAPI document
+        //options.AddHttpAuthentication("BearerAuth", auth =>
+        //{
+        //    auth.Token = secret;
+        //});
+    });
 }
 
 app.UseHttpsRedirection();
@@ -82,6 +114,11 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+app.MapGet("/world", () => "Hello world!")
+    .WithGroupName("internal");
+app.MapGet("/", () => "Hello universe!")
+    .WithGroupName("public");
 
 app.MapControllers();
 

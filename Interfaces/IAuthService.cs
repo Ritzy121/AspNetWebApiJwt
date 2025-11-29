@@ -1,0 +1,14 @@
+﻿using WebApi.Dtos;
+
+namespace WebApi.Interfaces;
+
+public interface IAuthService
+{
+    Task<AuthServiceResponseDto> SeedRolesAsync();
+    Task<AuthServiceResponseDto> RegisterAsync(RegisterDto registerDto);
+    Task<AuthServiceResponseDto> LoginAsync(LoginDto loginDto);
+    Task<AuthServiceResponseDto> MakeAdminAsync(UpdatePermissionDto updatePermissionDto);
+    Task<AuthServiceResponseDto> RemoveAdminAsync(UpdatePermissionDto updatePermissionDto);
+    Task<AuthServiceResponseDto> MakeOwnerAsync(UpdatePermissionDto updatePermissionDto);
+    Task<AuthServiceResponseDto> RemoveOwnerAsync(UpdatePermissionDto updatePermissionDto);
+}
